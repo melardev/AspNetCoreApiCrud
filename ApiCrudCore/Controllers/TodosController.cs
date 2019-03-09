@@ -43,7 +43,21 @@ namespace ApiCrudCore.Controllers
 
         [HttpGet]
         [Route("{id}")]
-        public async Task<IActionResult> GetTodoDetails(int id) => Json(await _todosService.Get(id));
+        public async Task<IActionResult> GetTodoDetails(int id)
+        {
+            var todo = await _todosService.GetById(id);
+            if (todo == null)
+                return StatusCode((int) HttpStatusCode.NotFound, new JsonResult(new
+                {
+                    Success = false,
+                    FullMessages = new string[]
+                    {
+                        "Not Found"
+                    }
+                }));
+            else
+                return Json(todo);
+        }
 
         [HttpPost]
         public async Task<IActionResult> CreateTodo([FromBody] Todo todo)
@@ -57,15 +71,42 @@ namespace ApiCrudCore.Controllers
 
         [HttpPut]
         [Route("{id}")]
-        public async Task<IActionResult> UpdateTodo(int id, [FromBody] Todo todo) =>
-            new OkObjectResult(await _todosService.Update(id, todo));
+        public async Task<IActionResult> UpdateTodo(int id, [FromBody] Todo todo)
+        {
+            var todoFromDb = await _todosService.GetById(id);
+            if (todoFromDb == null)
+                return NotFound(Json(new
+                {
+                    Success = false,
+                    FullMessages = new string[]
+                    {
+                        "Not Found"
+                    }
+                }));
+            else
+                return new OkObjectResult(await _todosService.Update(todoFromDb, todo));
+        }
 
 
         [HttpDelete]
         [Route("{id}")]
-        public IActionResult DeleteTodo(int id)
+        public async Task<IActionResult> DeleteTodo(int id)
         {
-            EntityEntry<Todo> result = _todosService.Delete(id);
+            var todoFromDb = await _todosService.GetById(id);
+            if (todoFromDb == null)
+                return new NotFoundObjectResult(Json(new
+                {
+                    Success = false,
+                    FullMessages = new string[]
+                    {
+                        "Not Found"
+                    }
+                }));
+            else
+            {
+                EntityEntry<Todo> result = _todosService.Delete(id);
+            }
+
             return NoContent();
         }
 

@@ -21,7 +21,6 @@ namespace ApiCrudCore.Infrastructure.Services
 
         public async Task<List<Todo>> FetchMany(TodoShow show = TodoShow.All)
         {
-            
             IQueryable<Todo> queryable = null;
 
             if (show == TodoShow.Completed)
@@ -33,7 +32,7 @@ namespace ApiCrudCore.Infrastructure.Services
                 queryable = _context.Todos.Where(t => !t.Completed);
             }
 
-            
+
             List<Todo> todos;
             if (queryable != null)
             {
@@ -48,7 +47,6 @@ namespace ApiCrudCore.Infrastructure.Services
             }
             else
             {
-                
                 todos = await _context.Todos.Select(t => new Todo
                 {
                     Id = t.Id,
@@ -77,19 +75,34 @@ namespace ApiCrudCore.Infrastructure.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task<Todo> Update(int id, Todo todoFromUserInput)
+        public async Task<Todo> Update(int id, Todo todoFromUser)
         {
             Todo todoFromDb = _context.Todos.First(t => t.Id == id);
-            todoFromDb.Title = todoFromUserInput.Title;
+            todoFromDb.Title = todoFromUser.Title;
 
-            if (todoFromUserInput.Description != null)
-                todoFromDb.Description = todoFromUserInput.Description;
+            if (todoFromUser.Description != null)
+                todoFromDb.Description = todoFromUser.Description;
 
-            todoFromDb.Completed = todoFromUserInput.Completed;
+            todoFromDb.Completed = todoFromUser.Completed;
 
             _context.Entry(todoFromDb).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return todoFromDb;
+        }
+
+
+        public async Task<Todo> Update(Todo currentTodo, Todo todoFromUser)
+        {
+            currentTodo.Title = todoFromUser.Title;
+
+            if (todoFromUser.Description != null)
+                currentTodo.Description = todoFromUser.Description;
+
+            currentTodo.Completed = todoFromUser.Completed;
+
+            _context.Entry(currentTodo).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return currentTodo;
         }
 
         /// <summary>  
@@ -108,6 +121,11 @@ namespace ApiCrudCore.Infrastructure.Services
         {
             _context.Todos.RemoveRange(_context.Todos);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<Todo> GetById(int id)
+        {
+            return await _context.Todos.FirstOrDefaultAsync(t => t.Id == id);
         }
     }
 }
